@@ -45,8 +45,8 @@ export async function migrate() {
     location_accuracy DOUBLE NULL,
     client_submitted_at DATETIME(3) NOT NULL,
     client_timezone VARCHAR(100) NOT NULL,
-    created_at DATETIME(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
-    updated_at DATETIME(3) NOT NULL DEFAULT (UTC_TIMESTAMP(3)),
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     deleted_at DATETIME(3) NULL,
     INDEX idx_public_date (deleted_at, status, created_at),
     INDEX idx_name (name)

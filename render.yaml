@@ -15,7 +15,7 @@ services:
       - key: DB_SSL
         value: "true"
       - key: STORAGE_DRIVER
-        value: r2
+        value: s3
       - key: TRUST_PROXY_HOPS
         value: "1"
       - key: DB_HOST
@@ -32,11 +32,13 @@ services:
         sync: false
       - key: ADMIN_ORIGIN
         sync: false
-      - key: R2_ACCOUNT_ID
+      - key: S3_ENDPOINT
         sync: false
-      - key: R2_BUCKET
+      - key: S3_REGION
         sync: false
-      - key: R2_ACCESS_KEY_ID
+      - key: S3_BUCKET
         sync: false
-      - key: R2_SECRET_ACCESS_KEY
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
         sync: false

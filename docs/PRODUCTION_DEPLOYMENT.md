@@ -1,6 +1,6 @@
-# Production deployment: Vercel, Render, TiDB Cloud, and Cloudflare R2
+# Production deployment: Vercel, Render, TiDB Cloud, and Backblaze B2
 
-This guide deploys the two static frontends to Vercel, the Express API to Render, the MySQL-compatible database to TiDB Cloud Starter, and testimonial photos to Cloudflare R2.
+This guide deploys the two static frontends to Vercel, the Express API to Render, the MySQL-compatible database to TiDB Cloud Starter, and testimonial photos to Backblaze B2.
 
 The services do not need scheduled keepalive jobs, periodic refreshes, or routine redeployment. Git pushes deploy application changes automatically. Render’s free web service does sleep after 15 minutes without traffic, so its first request after inactivity can take about a minute. Upgrade the Render service if you need consistently immediate responses.
 
@@ -9,7 +9,7 @@ The services do not need scheduled keepalive jobs, periodic refreshes, or routin
 ```text
 Public Vercel project ─┐
                        ├── Render Express API ── TiDB Cloud Starter
-Admin Vercel project ──┘                      └── private Cloudflare R2 bucket
+Admin Vercel project ──┘                      └── private Backblaze B2 bucket
 ```
 
 Both Vercel projects proxy `/api/*` to Render. The browser therefore treats API calls as same-origin. This keeps the host-only admin cookie reliable and avoids exposing an API credential or relying on third-party cookies.
@@ -19,11 +19,11 @@ Both Vercel projects proxy `/api/*` to Render. The browser therefore treats API 
 You need:
 
 - The repository pushed to GitHub, with the production branch merged into `main`.
-- Accounts at [Vercel](https://vercel.com), [Render](https://render.com), [TiDB Cloud](https://tidbcloud.com), and [Cloudflare](https://dash.cloudflare.com).
+- Accounts at [Vercel](https://vercel.com), [Render](https://render.com), [TiDB Cloud](https://tidbcloud.com), and [Backblaze](https://www.backblaze.com/sign-up/cloud-storage).
 - Node.js 22 and the repository checked out locally for the one-time database initialization.
 - Optional custom domains. The supplied `vercel.app` and `onrender.com` domains work without them.
 
-Never commit `.env` files, database passwords, or R2 credentials. They are already excluded by `.gitignore`.
+Never commit `.env` files, database passwords, or B2 credentials. They are already excluded by `.gitignore`.
 
 ## 1. Create the TiDB Cloud database
 
@@ -48,21 +48,29 @@ The API enables certificate validation and requires TLS 1.2 or newer when `DB_SS
 
 TiDB Cloud Starter is MySQL-compatible and has an always-free monthly quota. If the quota is exhausted, new connections are refused until the next monthly reset or until a spending limit is added.
 
-## 2. Create private Cloudflare R2 storage
+## 2. Create private Backblaze B2 storage
 
-1. In the Cloudflare dashboard, open **Storage & databases → R2**.
-2. Complete the R2 subscription checkout. Usage within the R2 free allowance remains free, but Cloudflare may require billing details.
-3. Create a Standard storage bucket named `siddhartha-testimonials`.
-4. Leave public bucket access disabled. Photos are served through the Express authorization checks.
-5. Open **Manage R2 API tokens** and create an account API token with **Object Read & Write** access limited to this bucket.
-6. Record the following values when Cloudflare shows them:
+Backblaze B2 can be started without a credit card, includes 10 GB of free storage, and does not require keepalive jobs or periodic redeployment. The API uses its S3-compatible interface.
 
-   - Account ID
-   - Access Key ID
-   - Secret Access Key
-   - Bucket name: `siddhartha-testimonials`
+1. Create a Backblaze account and verify your email address. If B2 is not visible, open **My Settings → Enabled Products** and enable **B2 Cloud Storage**.
+2. Open **Buckets → Create a Bucket**.
+3. Enter a globally unique bucket name, such as `siddhartha-testimonials-YOUR-SUFFIX`.
+4. Set **Files in Bucket** to **Private**. Photos must remain private because Express serves them through the application’s access rules.
+5. Open the bucket and record its S3 endpoint and region. An endpoint looks like `s3.us-east-005.backblazeb2.com`; save it for Render with the `https://` prefix. The matching region in this example is `us-east-005`.
+6. Open **Application Keys → Add a New Application Key** and create a key with:
 
-The secret access key is displayed only once. Store it in a password manager. Do not use a general Cloudflare API token.
+   - Access limited to the photo bucket
+   - Read and Write permissions
+   - **Allow List All Bucket Names** enabled, which helps S3-compatible SDK operations work with a bucket-restricted key
+
+7. Record the values Backblaze displays:
+
+   - `keyID` (used as `S3_ACCESS_KEY_ID`)
+   - `applicationKey` (used as `S3_SECRET_ACCESS_KEY`)
+   - Bucket name
+   - S3 endpoint and region
+
+The `applicationKey` is displayed only once, so store it in a password manager. Use a scoped application key, not the master application key. See Backblaze’s [S3 integration guide](https://www.backblaze.com/docs/en/cloud-storage-get-started-with-a-backblaze-integration) and [endpoint reference](https://www.backblaze.com/docs/en/cloud-storage-call-the-s3-compatible-api) if the dashboard wording changes.
 
 ## 3. Initialize the production schema and admin
 
@@ -136,10 +144,11 @@ The repository includes [`render.yaml`](../render.yaml), so a Blueprint is the l
    | `DB_NAME` | `testimonials` |
    | `PUBLIC_ORIGIN` | Temporarily `https://public-placeholder.invalid` |
    | `ADMIN_ORIGIN` | Temporarily `https://admin-placeholder.invalid` |
-   | `R2_ACCOUNT_ID` | Cloudflare account ID |
-   | `R2_BUCKET` | `siddhartha-testimonials` |
-   | `R2_ACCESS_KEY_ID` | Bucket-scoped R2 access key |
-   | `R2_SECRET_ACCESS_KEY` | Bucket-scoped R2 secret key |
+   | `S3_ENDPOINT` | B2 endpoint with HTTPS, for example `https://s3.us-east-005.backblazeb2.com` |
+   | `S3_REGION` | B2 region from the endpoint, for example `us-east-005` |
+   | `S3_BUCKET` | Your private B2 bucket name |
+   | `S3_ACCESS_KEY_ID` | Backblaze application key `keyID` |
+   | `S3_SECRET_ACCESS_KEY` | Backblaze `applicationKey` |
 
 5. Create the Blueprint and wait for the service to deploy.
 6. Copy its HTTPS URL, such as `https://siddhartha-testimonials-api.onrender.com`. This is the value called `API_ORIGIN` below.
@@ -159,7 +168,7 @@ Start command: npm run start -w @testimonials/api
 Health check: /api/health
 ```
 
-Do not add a persistent disk. R2 stores uploads, and TiDB stores relational data.
+Do not add a persistent disk. B2 stores uploads, and TiDB stores relational data.
 
 ## 5. Deploy the admin dashboard to Vercel
 
@@ -240,32 +249,32 @@ Complete these checks from a normal browser window:
 6. Approve one testimonial and confirm that it appears on the public website with its photo.
 7. Edit, unpublish, export, and soft-delete a test testimonial.
 8. Sign out and confirm that refreshing the admin dashboard returns to the login screen.
-9. Check the R2 bucket and confirm that the re-encoded `.webp` photo exists while the bucket remains private.
+9. Check the B2 bucket and confirm that the re-encoded `.webp` photo exists while the bucket remains private.
 10. Check Render logs for unexpected database, storage, or origin errors. The API deliberately avoids logging testimonial contents, passwords, and coordinates.
 
-The first API request after Render’s free service has slept may take about a minute. A timeout during that wake-up does not indicate lost data; reload after the service starts. TiDB and R2 remain persistent while Render sleeps.
+The first API request after Render’s free service has slept may take about a minute. A timeout during that wake-up does not indicate lost data; reload after the service starts. TiDB and B2 remain persistent while Render sleeps.
 
 ## 10. Future deployments and maintenance
 
-After setup, pushes to the connected production branch automatically deploy all three application services. TiDB Cloud and R2 do not need redeployment when application code changes.
+After setup, pushes to the connected production branch automatically deploy all three application services. TiDB Cloud and B2 do not need redeployment when application code changes.
 
 Routine work is limited to:
 
 - Reviewing dependency and provider security notices.
-- Monitoring free-tier usage in TiDB, R2, Render, and Vercel.
+- Monitoring free-tier usage in TiDB, B2, Render, and Vercel.
 - Exporting periodic database backups and testing restoration.
-- Rotating the TiDB and R2 credentials if they are exposed.
+- Rotating the TiDB and B2 credentials if they are exposed.
 - Upgrading Render if cold starts become unacceptable.
 
 Do not use uptime-pinging services to prevent Render’s free instance from sleeping. Sleeping is part of the free plan, and keeping it artificially active can consume the monthly instance allowance.
 
 ### Credential rotation
 
-When rotating a secret, update it in Render and wait for the service restart. R2 keys should stay bucket-scoped. Delete the old key only after `/api/health`, a test upload, and an approved-photo read succeed with the new key.
+When rotating a secret, update it in Render and wait for the service restart. B2 application keys should stay bucket-scoped. Delete the old key only after `/api/health`, a test upload, and an approved-photo read succeed with the new key.
 
 ### Backups
 
-CSV export is useful for content review but is not a complete relational backup. Periodically create a MySQL-compatible logical dump from TiDB and store it encrypted outside the application accounts. R2 objects should also be copied or covered by an appropriate retention policy. Soft deletion retains both the database record and photo; it is not a privacy erasure workflow.
+CSV export is useful for content review but is not a complete relational backup. Periodically create a MySQL-compatible logical dump from TiDB and store it encrypted outside the application accounts. B2 objects should also be copied or covered by an appropriate retention policy. Soft deletion retains both the database record and photo; it is not a privacy erasure workflow.
 
 ## Troubleshooting
 
@@ -287,7 +296,7 @@ Confirm that the browser calls `/api` on the Vercel domain rather than calling `
 
 ### Upload returns 500
 
-Verify `STORAGE_DRIVER=r2`, the account ID, bucket name, and R2 credentials. Confirm that the token has Object Read & Write permission for the selected bucket.
+Verify `STORAGE_DRIVER=s3`, the endpoint, region, bucket name, and B2 application-key credentials. The endpoint must use `https://s3.<region>.backblazeb2.com`, and `S3_REGION` must match it. Confirm that the scoped key has Read and Write access plus **Allow List All Bucket Names** enabled.
 
 ### Vercel build says `API_ORIGIN` is missing
 
