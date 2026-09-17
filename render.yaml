@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: siddhartha-testimonials-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build -w @testimonials/api
+    startCommand: npm run start -w @testimonials/api
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 22.20.0
+      - key: DB_SSL
+        value: "true"
+      - key: STORAGE_DRIVER
+        value: r2
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: PUBLIC_ORIGIN
+        sync: false
+      - key: ADMIN_ORIGIN
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
