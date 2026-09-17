@@ -8,12 +8,13 @@ import { config } from './config.js';
 export class BadPhoto extends Error {}
 export class PhotoNotFound extends Error {}
 
-const r2 = config.STORAGE_DRIVER === 'r2' ? new S3Client({
-  region: 'auto',
-  endpoint: config.R2_ENDPOINT!,
+const objectStorage = config.STORAGE_DRIVER === 's3' ? new S3Client({
+  region: config.S3_REGION!,
+  endpoint: config.S3_ENDPOINT!,
+  forcePathStyle: true,
   credentials: {
-    accessKeyId: config.R2_ACCESS_KEY_ID!,
-    secretAccessKey: config.R2_SECRET_ACCESS_KEY!,
+    accessKeyId: config.S3_ACCESS_KEY_ID!,
+    secretAccessKey: config.S3_SECRET_ACCESS_KEY!,
   },
 }) : null;
 
@@ -30,9 +31,9 @@ export async function savePhoto(file?: Express.Multer.File) {
     throw new BadPhoto('Upload a valid, non-animated JPEG, PNG, or WebP image under 5 MB and 20 megapixels.');
   }
   const filename = `${randomUUID()}.webp`;
-  if (r2) {
-    await r2.send(new PutObjectCommand({
-      Bucket: config.R2_BUCKET!, Key: filename, Body: output, ContentType: 'image/webp',
+  if (objectStorage) {
+    await objectStorage.send(new PutObjectCommand({
+      Bucket: config.S3_BUCKET!, Key: filename, Body: output, ContentType: 'image/webp',
     }));
   } else {
     await mkdir(config.UPLOAD_DIR, { recursive: true });
@@ -42,7 +43,7 @@ export async function savePhoto(file?: Express.Multer.File) {
 }
 
 export async function readPhoto(filename: string) {
-  if (!r2) {
+  if (!objectStorage) {
     try { return await readFile(path.join(config.UPLOAD_DIR, filename)); }
     catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new PhotoNotFound();
@@ -50,7 +51,7 @@ export async function readPhoto(filename: string) {
     }
   }
   try {
-    const response = await r2.send(new GetObjectCommand({ Bucket: config.R2_BUCKET!, Key: filename }));
+    const response = await objectStorage.send(new GetObjectCommand({ Bucket: config.S3_BUCKET!, Key: filename }));
     if (!response.Body) throw new PhotoNotFound();
     return Buffer.from(await response.Body.transformToByteArray());
   } catch (error) {
@@ -62,8 +63,8 @@ export async function readPhoto(filename: string) {
 }
 
 export async function deletePhoto(filename: string) {
-  if (r2) {
-    await r2.send(new DeleteObjectCommand({ Bucket: config.R2_BUCKET!, Key: filename }));
+  if (objectStorage) {
+    await objectStorage.send(new DeleteObjectCommand({ Bucket: config.S3_BUCKET!, Key: filename }));
     return;
   }
   await unlink(path.join(config.UPLOAD_DIR, filename)).catch(error => {
