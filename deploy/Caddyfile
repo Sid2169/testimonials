@@ -1,0 +1,40 @@
+(security) {
+  header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-Frame-Options "DENY"
+    Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    -Server
+  }
+}
+
+{$PUBLIC_DOMAIN} {
+  import security
+  header Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+  @private path /api/admin /api/admin/*
+  handle @private {
+    respond "Not found" 404
+  }
+  handle /api/* {
+    reverse_proxy api:3000
+  }
+  handle {
+    reverse_proxy website:8080
+  }
+}
+
+{$ADMIN_DOMAIN} {
+  import security
+  header {
+    Permissions-Policy "geolocation=(), camera=(), microphone=()"
+    X-Robots-Tag "noindex, nofollow"
+    Cache-Control "no-store"
+  }
+  handle /api/* {
+    reverse_proxy api:3000
+  }
+  handle {
+    reverse_proxy admin:8080
+  }
+}

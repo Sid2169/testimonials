@@ -1,0 +1,20 @@
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+COPY package.json package-lock.json tsconfig.base.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/website/package.json apps/website/package.json
+COPY apps/admin/package.json apps/admin/package.json
+RUN npm ci
+COPY apps/api apps/api
+RUN npm run build -w @testimonials/api && npm prune --omit=dev
+
+FROM node:22-bookworm-slim
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/api/package.json ./package.json
+COPY --from=build /app/apps/api/dist ./dist
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
+EXPOSE 3000
+CMD ["node", "dist/server.js"]

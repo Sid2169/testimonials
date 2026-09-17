@@ -1,0 +1,17 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: testimonials
+      MYSQL_USER: testimonials
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in apps/api/.env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-development-root-only}
+    ports: ["127.0.0.1:3306:3306"]
+    volumes: ["dev_mysql_data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+volumes:
+  dev_mysql_data:
