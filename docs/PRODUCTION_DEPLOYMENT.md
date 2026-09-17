@@ -163,10 +163,12 @@ The placeholder origins let the API start safely before the frontend URLs exist.
 If you create the Render service manually instead of using the Blueprint, leave **Root Directory** empty and use:
 
 ```text
-Build command: npm ci && npm run build -w @testimonials/api
+Build command: npm ci --include=dev && npm run build -w @testimonials/api
 Start command: npm run start -w @testimonials/api
 Health check: /api/health
 ```
+
+The `--include=dev` flag is required because Render exposes `NODE_ENV=production` during the build. It installs TypeScript and the declaration packages needed to compile the API; those packages are not used by the running server.
 
 Do not add a persistent disk. B2 stores uploads, and TiDB stores relational data.
 
@@ -297,6 +299,10 @@ Confirm that the browser calls `/api` on the Vercel domain rather than calling `
 ### Upload returns 500
 
 Verify `STORAGE_DRIVER=s3`, the endpoint, region, bucket name, and B2 application-key credentials. The endpoint must use `https://s3.<region>.backblazeb2.com`, and `S3_REGION` must match it. Confirm that the scoped key has Read and Write access plus **Allow List All Bucket Names** enabled.
+
+### Render cannot find TypeScript declaration files
+
+Confirm that the Render build command is `npm ci --include=dev && npm run build -w @testimonials/api`. A plain `npm ci` omits development dependencies when `NODE_ENV=production`, including TypeScript and the Express, Multer, and cookie-parser declarations required during compilation.
 
 ### Vercel build says `API_ORIGIN` is missing
 
