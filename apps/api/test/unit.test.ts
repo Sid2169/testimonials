@@ -13,7 +13,7 @@ process.env.NODE_ENV = 'test';
 process.env.DB_PASSWORD = 'unit-tests-never-connect';
 process.env.UPLOAD_DIR = uploadDir;
 const { createApp } = await import('../src/app.js');
-const { savePhoto, BadPhoto } = await import('../src/photos.js');
+const { savePhoto, readPhoto, deletePhoto, BadPhoto, PhotoNotFound } = await import('../src/photos.js');
 const { requireCsrf } = await import('../src/auth.js');
 const { pool } = await import('../src/db.js');
 test.after(async () => { await pool.end(); await rm(uploadDir, { recursive: true, force: true }); });
@@ -104,4 +104,7 @@ test('photo handling rejects disguised files and re-encodes valid images without
   assert.equal(metadata.width, 512);
   assert.equal(metadata.height, 512);
   assert.equal(metadata.exif, undefined);
+  assert.deepEqual(await readPhoto(name!), output);
+  await deletePhoto(name!);
+  await assert.rejects(readPhoto(name!), PhotoNotFound);
 });

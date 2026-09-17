@@ -4,6 +4,7 @@ import { config } from './config.js';
 export const pool = mysql.createPool({
   host: config.DB_HOST, port: config.DB_PORT, user: config.DB_USER,
   password: config.DB_PASSWORD, database: config.DB_NAME,
+  ssl: config.DB_SSL ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
   timezone: 'Z', charset: 'utf8mb4', connectionLimit: 10,
   waitForConnections: true, queueLimit: 100,
 });

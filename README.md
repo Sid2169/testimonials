@@ -74,6 +74,8 @@ Requirements: Node.js 22.12+ and MySQL 8.4. Docker Compose is the easiest way to
 
 ## Simplest production deployment: one VPS, two domains
 
+For the managed, low-maintenance deployment using Vercel, Render, TiDB Cloud Starter, and Cloudflare R2, follow [the managed production deployment guide](docs/PRODUCTION_DEPLOYMENT.md).
+
 Use a Linux VPS with Docker Compose and two DNS names, for example `words.your-domain.com` and `admin.your-domain.com`. This keeps MySQL and uploaded photos on persistent server storage without requiring separate managed services. The public website and dashboard are built and served in separate containers. Both use same-origin `/api` reverse proxies to the private Express container.
 
 1. Copy the repository to your VPS. Copy `.env.example` to `.env`, set your two real domain names, and set **different, long, random database and root passwords**. Keep the `.env` file private (`chmod 600 .env`).
