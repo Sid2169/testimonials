@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1120">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Testimonial studio · Siddhartha</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell admin-shell">
+      <header class="site-header"><a href="/" class="brand"><span class="brand-mark">S/</span>Siddhartha<span class="brand-dot">.</span><span class="studio-label">STUDIO</span></a><nav aria-label="Dashboard navigation"><a id="website-link" href="http://localhost:5173">View website ↗</a><button id="logout" class="button ghost" hidden>Sign out</button></nav></header>
+      <main id="main">
+        <div id="session-loading" class="session-loading"><span class="eyebrow">Testimonial studio</span><p>Checking your session…</p></div>
+        <section id="login-section" class="login-layout" hidden aria-labelledby="login-title">
+          <div class="login-intro"><p class="eyebrow">Just for you</p><h1>A home for<br>your <span>kind words.</span></h1><p>Review the experiences people have shared, and choose the stories that appear on your website.</p><div class="login-detail"><span data-icon="lock"></span><span>Your private testimonial studio.</span></div></div>
+          <div class="login-panel panel"><span class="login-icon" data-icon="lock"></span><h2 id="login-title">Welcome back.</h2><p class="muted">Sign in to manage your testimonials.</p><form id="login-form" class="form-stack"><div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" required placeholder="you@example.com" maxlength="254"></div><div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Your password" maxlength="200"></div><p id="login-error" class="status-message error" role="alert"></p><button class="button" id="login-button" type="submit">Sign in <span data-icon="arrow"></span></button></form><p class="login-note">Access is reserved for Siddhartha.</p></div>
+        </section>
+        <section id="dashboard" hidden aria-labelledby="dashboard-title">
+          <div class="dashboard-heading"><div><p class="eyebrow">Your testimonial studio</p><h1 id="dashboard-title">Good words. All in one place.</h1><p class="muted">Review, refine, and share the experiences that tell your story.</p></div><button id="export" class="button secondary"><span data-icon="upload"></span>Export CSV</button></div>
+          <div class="stats-grid"><div class="stat-card panel"><span>Total testimonials</span><strong id="count-total">—</strong><span class="stat-detail">Every shared experience</span></div><div class="stat-card panel"><span>Awaiting review</span><strong id="count-pending">—</strong><span class="stat-detail"><i class="status-dot pending"></i>Ready for your attention</span></div><div class="stat-card panel"><span>Published</span><strong id="count-approved">—</strong><span class="stat-detail"><i class="status-dot approved"></i>Live on your website</span></div><div class="stat-card panel"><span>Not published</span><strong id="count-rejected">—</strong><span class="stat-detail">Kept private</span></div></div>
+          <div class="collection panel">
+            <div class="collection-toolbar"><div class="filter-tabs" role="group" aria-label="Filter by status"><button data-status="all" aria-pressed="true">All</button><button data-status="pending" aria-pressed="false">Pending</button><button data-status="approved" aria-pressed="false">Published</button><button data-status="rejected" aria-pressed="false">Not published</button></div><div class="list-controls"><label class="sr-only" for="search">Search testimonials</label><input id="search" type="search" placeholder="Search name, company, words…" maxlength="100"><label class="sr-only" for="sort">Sort testimonials</label><select id="sort"><option value="newest">Newest first</option><option value="oldest">Oldest first</option><option value="name_asc">Name: A → Z</option><option value="name_desc">Name: Z → A</option></select></div></div>
+            <p id="list-error" class="status-message error" role="alert"></p>
+            <div id="table-container" aria-live="polite"></div>
+            <div class="collection-footer"><span id="list-summary">Loading testimonials…</span><div class="pagination"><button id="previous" class="button ghost" type="button" disabled>Previous</button><span id="page-number">1</span><button id="next" class="button ghost" type="button" disabled>Next</button></div></div>
+          </div>
+          <p class="dashboard-note"><span data-icon="lock"></span>Location and submission details are private. Only approved testimonials appear on your website.</p>
+        </section>
+      </main>
+      <footer class="site-footer"><span>Siddhartha · Testimonial studio</span><span id="admin-email">Private access</span></footer>
+    </div>
+    <dialog id="edit-dialog" aria-labelledby="edit-title"><div class="dialog-heading"><h2 id="edit-title">Review testimonial</h2><button class="icon-button" id="close-edit" type="button" aria-label="Close review"><span data-icon="close"></span></button></div><form id="edit-form" class="form-stack"><div class="field"><label for="edit-name">Name</label><input id="edit-name" name="name" required maxlength="100"></div><div class="field"><label for="edit-view">Testimonial</label><textarea id="edit-view" name="view" required minlength="10" maxlength="3000" rows="6"></textarea></div><div class="field-grid"><div class="field"><label for="edit-company">Company</label><input id="edit-company" name="company" maxlength="150"></div><div class="field"><label for="edit-designation">Designation</label><input id="edit-designation" name="designation" maxlength="150"></div></div><div class="field"><label for="edit-linkedin">LinkedIn</label><input id="edit-linkedin" name="linkedin" type="url" maxlength="500"></div><div class="field"><label for="edit-status">Publication status</label><select id="edit-status" name="status"><option value="pending">Pending review</option><option value="approved">Approved · visible on website</option><option value="rejected">Not published · private</option></select></div><div id="submission-details" class="submission-details"></div><p id="edit-error" class="status-message error" role="alert"></p><div class="dialog-actions"><button class="button ghost" type="button" id="cancel-edit">Cancel</button><button class="button" id="save-edit" type="submit">Save changes</button></div></form></dialog>
+    <dialog id="delete-dialog" aria-labelledby="delete-title"><div class="dialog-heading"><h2 id="delete-title">Delete testimonial?</h2></div><p id="delete-description" class="dialog-copy"></p><p class="small muted">It will be removed from your dashboard and public website. A database administrator can restore the archived record.</p><p id="delete-error" class="status-message error" role="alert"></p><div class="dialog-actions"><button id="cancel-delete" class="button ghost" type="button" autofocus>Keep testimonial</button><button id="confirm-delete" class="button danger" type="button">Delete testimonial</button></div></dialog>
+    <div id="toast" class="toast" role="status" hidden></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
