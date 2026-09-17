@@ -1,0 +1,17 @@
+{
+  "name": "siddhartha-testimonials",
+  "private": true,
+  "type": "module",
+  "workspaces": ["apps/*"],
+  "engines": { "node": ">=22.12.0" },
+  "scripts": {
+    "dev": "concurrently -k -n api,website,admin -c blue,green,magenta \"npm run dev -w @testimonials/api\" \"npm run dev -w @testimonials/website\" \"npm run dev -w @testimonials/admin\"",
+    "build": "npm run build --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test -w @testimonials/api",
+    "test:integration": "npm run test:integration -w @testimonials/api",
+    "db:migrate": "npm run db:migrate -w @testimonials/api",
+    "admin:create": "npm run admin:create -w @testimonials/api --"
+  },
+  "devDependencies": { "concurrently": "^9.2.1", "typescript": "^5.9.3" }
+}
