@@ -5,14 +5,12 @@ import multer from 'multer';
 import { rateLimit } from 'express-rate-limit';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
-import { unlink } from 'node:fs/promises';
-import path from 'node:path';
 import { z, ZodError } from 'zod';
 import { config } from './config.js';
 import { execute, rows, type SqlValue } from './db.js';
 import { cookieOptions, findSession, hashToken, randomToken, requireAdmin, requireCsrf, requireOrigin } from './auth.js';
 import { submission, edit, listing, orderBy, csvCell } from './validation.js';
-import { savePhoto, BadPhoto } from './photos.js';
+import { savePhoto, readPhoto, deletePhoto, BadPhoto, PhotoNotFound } from './photos.js';
 
 const publicColumns = 'id, name, view, company, designation, linkedin, created_at, photo_filename';
 function present(row: Record<string, unknown>) {
@@ -80,7 +78,7 @@ export function createApp() {
             data.location ? Number(data.location.longitude.toFixed(3)) : null,
             data.location?.accuracy ?? null, data.clientSubmittedAt, data.clientTimezone]);
       } catch (error) {
-        if (filename) await unlink(path.join(config.UPLOAD_DIR, filename)).catch(() => {});
+        if (filename) await deletePhoto(filename).catch(() => {});
         throw error;
       }
       res.status(201).json({ message: 'Thank you! Your testimonial is awaiting review.' });
@@ -93,10 +91,13 @@ export function createApp() {
     if (!record?.photo_filename || (record.status !== 'approved' && !await findSession(req.cookies[config.cookieName]))) {
       res.status(404).json({ error: 'Photo not found.' }); return;
     }
-    res.type('webp');
-    res.sendFile(record.photo_filename, { root: config.UPLOAD_DIR, cacheControl: false }, error => {
-      if (error && !res.headersSent) res.status(404).json({ error: 'Photo not found.' });
-    });
+    try {
+      const photo = await readPhoto(record.photo_filename);
+      res.type('webp').send(photo);
+    } catch (error) {
+      if (error instanceof PhotoNotFound) { res.status(404).json({ error: 'Photo not found.' }); return; }
+      throw error;
+    }
   });
 
   app.post('/api/admin/login', requireOrigin([config.ADMIN_ORIGIN]),
