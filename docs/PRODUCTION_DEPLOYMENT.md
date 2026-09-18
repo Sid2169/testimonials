@@ -310,4 +310,4 @@ Add `API_ORIGIN` to that Vercel project’s Production environment variables and
 
 ### Vercel reports that a rewrite is missing `destination`
 
-Confirm that the project is deploying a revision where each `vercel.ts` uses the named `export const config = { ... }` format. Vercel requires the final programmatic configuration to be exported under the name `config`; a default export is not interpreted correctly.
+Confirm that the project is deploying the latest `main` revision. Each `vercel.ts` must use the named `config` export and Vercel's official `routes.rewrite(...)` helper; a default export or dynamically constructed plain rewrite object may not be interpreted correctly. Create a new deployment from the latest commit instead of redeploying the original failed deployment, because redeploying reuses that deployment's older source revision.
