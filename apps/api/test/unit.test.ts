@@ -28,6 +28,7 @@ test('submission accepts omitted location and optional profile fields', () => {
   assert.equal(result.location, null);
   assert.equal(result.linkedin, '');
   assert.equal(result.company, '');
+  assert.equal(result.companyUrl, '');
   assert.equal(result.name, valid.name);
 });
 test('validation rejects invalid required fields, location, timestamp, timezone and missing consent', () => {
@@ -42,6 +43,14 @@ test('LinkedIn accepts only HTTPS LinkedIn profiles without spoofed hosts', () =
   assert.equal(fields.safeParse({ ...valid, linkedin: 'https://www.linkedin.com/in/anika/' }).success, true);
   for (const linkedin of ['javascript:alert(1)', 'https://linkedin.com.evil.test/in/person', 'https://evil.test/in/person', 'https://linkedin.com@evil.test/in/person', 'https://user:pass@linkedin.com/in/person', 'http://linkedin.com/in/person']) {
     assert.equal(fields.safeParse({ ...valid, linkedin }).success, false);
+  }
+});
+test('company page accepts secure URLs without embedded credentials', () => {
+  for (const companyUrl of ['https://example.com', 'https://www.example.com/about?team=web#people']) {
+    assert.equal(fields.safeParse({ ...valid, companyUrl }).success, true);
+  }
+  for (const companyUrl of ['javascript:alert(1)', 'http://example.com', 'https://user:pass@example.com', 'not-a-url']) {
+    assert.equal(fields.safeParse({ ...valid, companyUrl }).success, false);
   }
 });
 test('sorting and pagination allow only bounded known values', () => {

@@ -12,10 +12,10 @@ import { cookieOptions, findSession, hashToken, randomToken, requireAdmin, requi
 import { submission, edit, listing, orderBy, csvCell } from './validation.js';
 import { savePhoto, readPhoto, deletePhoto, BadPhoto, PhotoNotFound } from './photos.js';
 
-const publicColumns = 'id, name, view, company, designation, linkedin, created_at, photo_filename';
+const publicColumns = 'id, name, view, company, company_url, designation, linkedin, created_at, photo_filename';
 function present(row: Record<string, unknown>) {
-  const { photo_filename, ...rest } = row;
-  return { ...rest, photoUrl: photo_filename ? `/api/photos/${row.id}` : null };
+  const { photo_filename, company_url, ...rest } = row;
+  return { ...rest, companyUrl: company_url ?? '', photoUrl: photo_filename ? `/api/photos/${row.id}` : null };
 }
 function queryFilter(query: z.infer<typeof listing>) {
   let where = 'deleted_at IS NULL';
@@ -72,8 +72,8 @@ export function createApp() {
       const filename = await savePhoto(req.file);
       const id = randomUUID();
       try {
-        await execute(`INSERT INTO testimonials (id, name, view, company, designation, linkedin, photo_filename, latitude, longitude, location_accuracy, client_submitted_at, client_timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [id, data.name, data.view, data.company, data.designation, data.linkedin, filename,
+        await execute(`INSERT INTO testimonials (id, name, view, company, company_url, designation, linkedin, photo_filename, latitude, longitude, location_accuracy, client_submitted_at, client_timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [id, data.name, data.view, data.company, data.companyUrl, data.designation, data.linkedin, filename,
             data.location ? Number(data.location.latitude.toFixed(3)) : null,
             data.location ? Number(data.location.longitude.toFixed(3)) : null,
             data.location?.accuracy ?? null, data.clientSubmittedAt, data.clientTimezone]);
@@ -146,7 +146,7 @@ export function createApp() {
   app.get('/api/admin/export', async (req, res) => {
     const query = listing.parse(req.query);
     const { where, params } = queryFilter(query);
-    const columns = ['id', 'name', 'view', 'company', 'designation', 'linkedin', 'status', 'created_at', 'client_submitted_at', 'client_timezone', 'latitude', 'longitude', 'location_accuracy'];
+    const columns = ['id', 'name', 'view', 'company', 'company_url', 'designation', 'linkedin', 'status', 'created_at', 'client_submitted_at', 'client_timezone', 'latitude', 'longitude', 'location_accuracy'];
     const data = await rows<Record<string, unknown>>(`SELECT ${columns.join(', ')} FROM testimonials WHERE ${where} ORDER BY ${orderBy[query.sort]} LIMIT 10001`, params);
     if (data.length > 10000) { res.status(422).json({ error: 'Export is limited to 10,000 testimonials. Narrow your search or status filter.' }); return; }
     res.setHeader('Content-Disposition', 'attachment; filename="testimonials.csv"');
@@ -155,7 +155,7 @@ export function createApp() {
   app.patch('/api/admin/testimonials/:id', async (req, res) => {
     const id = z.uuid().parse(req.params.id);
     const data = edit.parse(req.body);
-    const result = await execute('UPDATE testimonials SET name = ?, view = ?, company = ?, designation = ?, linkedin = ?, status = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ? AND deleted_at IS NULL', [data.name, data.view, data.company, data.designation, data.linkedin, data.status, id]);
+    const result = await execute('UPDATE testimonials SET name = ?, view = ?, company = ?, company_url = ?, designation = ?, linkedin = ?, status = ?, updated_at = UTC_TIMESTAMP(3) WHERE id = ? AND deleted_at IS NULL', [data.name, data.view, data.company, data.companyUrl, data.designation, data.linkedin, data.status, id]);
     if (!result.affectedRows) { res.status(404).json({ error: 'Testimonial not found.' }); return; }
     res.json({ message: 'Testimonial updated.' });
   });
