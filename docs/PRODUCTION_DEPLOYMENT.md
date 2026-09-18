@@ -307,3 +307,7 @@ Confirm that the Render build command is `npm ci --include=dev && npm run build 
 ### Vercel build says `API_ORIGIN` is missing
 
 Add `API_ORIGIN` to that Vercel project’s Production environment variables and redeploy. Set it to the Render HTTPS origin without a trailing slash.
+
+### Vercel reports that a rewrite is missing `destination`
+
+Confirm that the project is deploying a revision where each `vercel.ts` uses the named `export const config = { ... }` format. Vercel requires the final programmatic configuration to be exported under the name `config`; a default export is not interpreted correctly.
