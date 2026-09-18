@@ -2,7 +2,7 @@
 
 A testimonial website, a separately deployable private admin dashboard, and an Express API using MySQL. The frontends use semantic HTML, CSS, and vanilla TypeScript with Vite. No frontend framework is required.
 
-## What’s included
+## What’s included in this website
 
 - Responsive public form and a paginated wall of **approved** testimonials.
 - Required name and testimonial; optional company, designation, LinkedIn profile, and photo.
