@@ -3,7 +3,7 @@ if (!apiOrigin || new URL(apiOrigin).protocol !== 'https:') {
   throw new Error('Set API_ORIGIN to the HTTPS URL of the Render API service.');
 }
 
-export default {
+export const config = {
   framework: 'vite',
   installCommand: 'cd ../.. && npm ci',
   buildCommand: 'cd ../.. && npm run build -w @testimonials/website',
