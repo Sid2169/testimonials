@@ -4,6 +4,13 @@ export const fields = z.object({
   name: z.string().trim().min(1, 'Please enter your name.').max(100),
   view: z.string().trim().min(10, 'Please write at least 10 characters.').max(3000),
   company: z.string().trim().max(150).default(''),
+  companyUrl: z.string().trim().max(500).default('').refine(value => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'https:' && !url.username && !url.password;
+    } catch { return false; }
+  }, 'Use a secure company website URL beginning with https://.'),
   designation: z.string().trim().max(150).default(''),
   linkedin: z.string().trim().max(500).default('').refine(value => {
     if (!value) return true;

@@ -5,7 +5,7 @@ A testimonial website, a separately deployable private admin dashboard, and an E
 ## What’s included in this website
 
 - Responsive public form and a paginated wall of **approved** testimonials.
-- Required name and testimonial; optional company, designation, LinkedIn profile, and photo.
+- Required name and testimonial; optional company, company page, designation, LinkedIn profile, and photo.
 - Optional browser location requested on page load. Permission denial, timeouts, or removal do not block submission. Coordinates are rounded to three decimal places and never returned by the public API.
 - Automatic visitor timestamp, visitor timezone, and a separate authoritative UTC server timestamp. Visitor-supplied time and location are untrusted metadata, not proof of when or where someone submitted.
 - JPEG, PNG, and WebP uploads, limited to 5 MB and 20 megapixels. Images are decoded, resized to at most 512 × 512, re-encoded as WebP, and stripped of metadata. Photos remain on server storage and are inaccessible publicly until approved.

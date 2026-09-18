@@ -36,6 +36,7 @@ export async function migrate() {
     name VARCHAR(100) NOT NULL,
     view TEXT NOT NULL,
     company VARCHAR(150) NOT NULL DEFAULT '',
+    company_url VARCHAR(500) NOT NULL DEFAULT '',
     designation VARCHAR(150) NOT NULL DEFAULT '',
     linkedin VARCHAR(500) NOT NULL DEFAULT '',
     photo_filename VARCHAR(100) NULL,
@@ -51,4 +52,10 @@ export async function migrate() {
     INDEX idx_public_date (deleted_at, status, created_at),
     INDEX idx_name (name)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  const [companyUrlColumn] = await rows<{ total: number }>(`SELECT COUNT(*) AS total
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'testimonials' AND column_name = 'company_url'`);
+  if (!companyUrlColumn.total) {
+    await execute("ALTER TABLE testimonials ADD COLUMN company_url VARCHAR(500) NOT NULL DEFAULT '' AFTER company");
+  }
 }

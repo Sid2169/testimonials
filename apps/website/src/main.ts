@@ -84,9 +84,19 @@ form.addEventListener('submit', async event => {
     el('#form-error').textContent = 'Use your full LinkedIn profile URL: https://www.linkedin.com/in/your-name/.';
     el('#linkedin').focus(); return;
   }
+  const companyUrl = el<HTMLInputElement>('#company-url').value.trim();
+  if (companyUrl) {
+    try {
+      const url = new URL(companyUrl);
+      if (url.protocol !== 'https:' || url.username || url.password) throw new Error();
+    } catch {
+      el('#form-error').textContent = 'Use a secure company website URL beginning with https://.';
+      el('#company-url').focus(); return;
+    }
+  }
   const formData = new FormData(form);
   const payload = {
-    name: formData.get('name'), view: formData.get('view'), company: formData.get('company'),
+    name: formData.get('name'), view: formData.get('view'), company: formData.get('company'), companyUrl,
     designation: formData.get('designation'), linkedin, website: formData.get('website'),
     consent: el<HTMLInputElement>('#consent').checked,
     clientSubmittedAt: new Date().toISOString(), clientTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -110,8 +120,11 @@ form.addEventListener('submit', async event => {
 });
 
 function card(item: Testimonial) {
-  const role = [item.designation, item.company].filter(Boolean).join(' at ');
-  return `<article class="testimonial-card panel"><span class="quote-icon">${icon('quote')}</span><blockquote class="testimonial-quote">${escapeHtml(item.view)}</blockquote><div class="testimonial-person">${avatar(item)}<div><strong>${escapeHtml(item.name)}</strong>${role ? `<p>${escapeHtml(role)}</p>` : ''}</div>${item.linkedin ? `<a class="profile-link" href="${escapeHtml(item.linkedin)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(item.name)} on LinkedIn">${icon('external')}</a>` : ''}</div><div class="card-date">${dateLabel(item.created_at)}</div></article>`;
+  const company = item.companyUrl && item.company
+    ? `<a href="${escapeHtml(item.companyUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.company)}</a>`
+    : escapeHtml(item.company);
+  const role = item.designation && company ? `${escapeHtml(item.designation)} at ${company}` : escapeHtml(item.designation) || company;
+  return `<article class="testimonial-card panel"><span class="quote-icon">${icon('quote')}</span><blockquote class="testimonial-quote">${escapeHtml(item.view)}</blockquote><div class="testimonial-person">${avatar(item)}<div><strong>${escapeHtml(item.name)}</strong>${role ? `<p>${role}</p>` : ''}</div>${item.linkedin ? `<a class="profile-link" href="${escapeHtml(item.linkedin)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(item.name)} on LinkedIn">${icon('external')}</a>` : ''}</div><div class="card-date">${dateLabel(item.created_at)}</div></article>`;
 }
 let wallPage = 1;
 let wallLoading = false;

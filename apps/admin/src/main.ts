@@ -134,7 +134,7 @@ el('#table-container').addEventListener('click', async event => {
     el('#delete-description').textContent = `Delete the testimonial from ${item.name}?`;
     el('#delete-error').textContent = ''; deleteDialog.showModal(); return;
   }
-  for (const field of ['name', 'view', 'company', 'designation', 'linkedin', 'status'] as const) {
+  for (const field of ['name', 'view', 'company', 'companyUrl', 'designation', 'linkedin', 'status'] as const) {
     el<HTMLInputElement | HTMLSelectElement>(`#edit-${field}`).value = item[field] ?? '';
   }
   const hasLocation = item.latitude != null && item.longitude != null;

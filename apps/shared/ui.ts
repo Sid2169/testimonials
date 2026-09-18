@@ -1,5 +1,5 @@
 export interface Testimonial {
-  id: string; name: string; view: string; company: string; designation: string;
+  id: string; name: string; view: string; company: string; companyUrl: string; designation: string;
   linkedin: string; photoUrl: string | null; created_at: string;
   status?: 'pending' | 'approved' | 'rejected';
   client_submitted_at?: string; client_timezone?: string;

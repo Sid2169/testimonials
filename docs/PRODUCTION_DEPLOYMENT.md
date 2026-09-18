@@ -260,7 +260,15 @@ The first API request after Render’s free service has slept may take about a m
 
 After setup, pushes to the connected production branch automatically deploy all three application services. TiDB Cloud and B2 do not need redeployment when application code changes.
 
+For a release that changes the database schema, run its migration against TiDB before merging or deploying the application code. From the release branch, load the production database settings into `apps/api/.env` and run:
+
+```bash
+npm run db:migrate
+```
+
+The migration is idempotent. For example, the company-page release adds `company_url` with an empty default, so existing testimonials remain valid. After the migration succeeds, deploy the matching application revision.
 Routine work is limited to:
+
 
 - Reviewing dependency and provider security notices.
 - Monitoring free-tier usage in TiDB, B2, Render, and Vercel.

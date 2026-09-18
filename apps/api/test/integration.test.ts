@@ -27,7 +27,7 @@ test('MySQL lifecycle: submission → private review → approval → export →
   const app = createApp();
   const visitor = supertest(app);
   const admin = supertest.agent(app);
-  const payload = { name: '=Anika', view: 'A thoughtful developer and an excellent collaborator.', company: 'Studio', designation: 'Designer', linkedin: 'https://www.linkedin.com/in/anika/', consent: true, clientSubmittedAt: new Date().toISOString(), clientTimezone: 'Asia/Kolkata', location: { latitude: 12.123456, longitude: 77.123456, accuracy: 400 } };
+  const payload = { name: '=Anika', view: 'A thoughtful developer and an excellent collaborator.', company: 'Studio', companyUrl: 'https://studio.example/about', designation: 'Designer', linkedin: 'https://www.linkedin.com/in/anika/', consent: true, clientSubmittedAt: new Date().toISOString(), clientTimezone: 'Asia/Kolkata', location: { latitude: 12.123456, longitude: 77.123456, accuracy: 400 } };
   const photo = await sharp({ create: { width: 30, height: 30, channels: 3, background: '#123456' } }).png().toBuffer();
   await visitor.post('/api/testimonials').set('Origin', publicOrigin).field('payload', JSON.stringify(payload)).attach('photo', photo, { filename: 'avatar.png', contentType: 'image/png' }).expect(201);
   const [record] = await rows<{ id: string; status: string; latitude: string }>('SELECT id, status, latitude FROM testimonials');
@@ -48,10 +48,12 @@ test('MySQL lifecycle: submission → private review → approval → export →
   await admin.patch(`/api/admin/testimonials/${record.id}`).set('Origin', adminOrigin).set('X-CSRF-Token', csrf).send(approved).expect(200);
   const published = (await visitor.get('/api/testimonials').expect(200)).body;
   assert.equal(published.total, 1);
+  assert.equal(published.items[0].companyUrl, payload.companyUrl);
   for (const privateField of ['latitude', 'longitude', 'location_accuracy', 'client_submitted_at', 'client_timezone', 'photo_filename']) assert.equal(privateField in published.items[0], false);
   await visitor.get(`/api/photos/${record.id}`).expect(200);
   const csv = await admin.get('/api/admin/export?status=approved').expect(200);
   assert.ok(csv.text.includes('"\'=Anika"'));
+  assert.ok(csv.text.includes(`"${payload.companyUrl}"`));
   const list = (await admin.get('/api/admin/testimonials?sort=name_asc&search=Anika').expect(200)).body;
   assert.equal(list.total, 1); assert.equal(list.counts.approved, 1);
   await admin.patch(`/api/admin/testimonials/${record.id}`).set('Origin', adminOrigin).set('X-CSRF-Token', csrf).send({ ...approved, name: 'Anika Rao', status: 'rejected' }).expect(200);
