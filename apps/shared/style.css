@@ -1,3 +1,21 @@
+/*
+  Shared stylesheet for both the public website and the admin dashboard.
+
+  This file is intentionally minified (one long line per rule block) to keep
+  the shipped CSS small. If you are new to the codebase, here is how to read it:
+
+  1. The :root block below defines CSS custom properties (variables) — every
+     colour, spacing, and radius used across both apps lives there as
+     `--token-name: value;`. To re-theme the apps, edit those values first.
+  2. The following rules are base/global styles: box model, typography,
+     focus outlines, buttons, and the shared layout shell (.shell, header).
+  3. Each app then layers its own page-specific rules in
+     apps/website/src/style.css and apps/admin/src/style.css.
+
+  Because everything references the shared variables, both apps stay visually
+  consistent without duplicating colour values.
+*/
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap');
 
 :root{font-family:'DM Sans',sans-serif;color:#eaf0f8;background:#0b1120;font-synthesis:none;--bg:#0b1120;--panel:#121c2e;--input:#0d1627;--text:#eaf0f8;--muted:#a4b1c6;--line:#29364b;--accent:#00b2b8;--accent-text:#132409;--danger:#ffb4b4;--radius:20px;color-scheme:dark}
