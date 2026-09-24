@@ -1,3 +1,7 @@
+# Render "Blueprint": declarative service definition that Render reads to
+# build/refresh the API service. Variables marked `sync: false` are secrets or
+# environment-specific values Render prompts for in its dashboard (and keeps
+# out of this file). See docs/PRODUCTION_DEPLOYMENT.md for the exact values.
 services:
   - type: web
     name: siddhartha-testimonials-api
@@ -8,6 +12,7 @@ services:
     buildCommand: npm ci --include=dev && npm run build -w @testimonials/api
     startCommand: npm run start -w @testimonials/api
     healthCheckPath: /api/health
+    # Redeploys automatically on every push to the production branch.
     autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV
@@ -15,11 +20,13 @@ services:
       - key: NODE_VERSION
         value: 22.20.0
       - key: DB_SSL
-        value: "true"
+        value: "true" # TiDB Cloud requires TLS.
       - key: STORAGE_DRIVER
-        value: s3
+        value: s3 # Photos go to Backblaze B2 via its S3 interface.
       - key: TRUST_PROXY_HOPS
-        value: "1"
+        value: "1" # Render's router sits one hop in front of the service.
+      # The rest are entered in the Render dashboard (sync: false = not stored
+      # here): database credentials + both public/admin origins + the S3 keys.
       - key: DB_HOST
         sync: false
       - key: DB_PORT

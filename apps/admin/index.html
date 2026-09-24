@@ -1,4 +1,11 @@
 <!doctype html>
+<!--
+  Admin dashboard shell. Behaviour lives in /src/main.ts; the pieces here are:
+  - the login section (shown first, until a valid session cookie is confirmed),
+  - the dashboard section (loaded only after a successful session check),
+  - two <dialog>s used for editing and for confirming deletion,
+  - data-icon="..." spans, filled with inline SVG by main.ts at startup.
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8">

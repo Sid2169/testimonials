@@ -1,4 +1,12 @@
 <!doctype html>
+<!--
+  Public website shell. All behaviour lives in /src/main.ts; the only moving
+  parts here are:
+  - data-icon="..." spans, which main.ts fills with inline SVG icons on load;
+  - the <form id="testimonial-form">, whose fields main.ts turns into the
+    submission payload;
+  - the hidden honeypot input named "website" (see main.ts for how it's used).
+-->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
