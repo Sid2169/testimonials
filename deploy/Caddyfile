@@ -1,17 +1,35 @@
+# Caddy routing for the production domains.
+#
+# How requests flow: Caddy sits on the `edge` network, sees HTTPS traffic on
+# ports 80/443 (auto-obtaining TLS certs for both domains), then proxies each
+# request to the matching container over the internal `private` network.
+#
+# Important security property: the PUBLIC domain deliberately answers any
+# /api/admin/* request with "Not found" — the admin API is only ever reachable
+# from the admin domain.
+
+# Named reusable block applied to both sites (Caddy "snippets" via `import`).
 (security) {
   header {
     Strict-Transport-Security "max-age=31536000"
     X-Content-Type-Options "nosniff"
     Referrer-Policy "strict-origin-when-cross-origin"
     X-Frame-Options "DENY"
+    # Content-Security-Policy: only same-origin resources (+ the Google Fonts
+    # endpoints); no inline scripts or third-party script origins.
     Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' blob: data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
-    -Server
+    -Server # Don't advertise Caddy's version/identity.
   }
 }
 
+# Public site: words.example.com
 {$PUBLIC_DOMAIN} {
   import security
+  # The site asks visitors for their location, so geolocation is allowed for
+  # this origin only; camera/microphone stay blocked.
   header Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+  # Harden the boundary: block any attempt to reach admin routes from the
+  # public domain (handled MATCHING /api/admin/*), responding 404.
   @private path /api/admin /api/admin/*
   handle @private {
     respond "Not found" 404
@@ -24,9 +42,11 @@
   }
 }
 
+# Admin site: admin.example.com
 {$ADMIN_DOMAIN} {
   import security
   header {
+    # The admin app is private: no geolocation, no indexing, never cached.
     Permissions-Policy "geolocation=(), camera=(), microphone=()"
     X-Robots-Tag "noindex, nofollow"
     Cache-Control "no-store"

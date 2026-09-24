@@ -1,6 +1,11 @@
+# Caddy "static file server" config used INSIDE the frontend images (the
+# containers that serve the built website/admin over the private network).
+# :8080 is the internal port Caddy listens on inside the container; compose
+# never publishes it — the outer Caddy reverse-proxies to it on this port.
+
 :8080 {
-  root * /srv
-  encode zstd gzip
-  try_files {path} /index.html
+  root * /srv          # The static build output copied into the image.
+  encode zstd gzip     # Compressed transfers (both modern algorithms).
+  try_files {path} /index.html # SPA fallback: unknown paths serve the shell.
   file_server
 }

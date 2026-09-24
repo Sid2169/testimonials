@@ -1,14 +1,32 @@
+# Production stack: MySQL + Express API + the two frontends + Caddy.
+#
+# Network model (important to understand):
+# - `private` is an INTERNAL-only network: containers on it can talk to each
+#   other, but none of them need their ports published to the host. MySQL and
+#   the API are reachable only from inside this network.
+# - `edge` is the only bridge to the outside world, and only Caddy sits on it.
+#   Caddy terminates HTTPS and reverse-proxies to the three app containers.
+#
+# Everything else (restart policies, healthchecks, volumes) is normal Docker
+# Compose bookkeeping so a rebooted host comes back up with its data intact.
+
 services:
+  # The database. Persists in the `mysql_data` volume so container restarts and
+  # image updates never lose testimonials. Secrets come from .env at deploy time.
   db:
     image: mysql:8.4
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: testimonials
       MYSQL_USER: testimonials
+      # `:?` syntax = fail the compose command if the variable is unset,
+      # with a helpful message instead of a confusing DB error later.
       MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     volumes:
       - mysql_data:/var/lib/mysql
+    # A container is "started" only once MySQL answers ping — critical so the
+    # API (which depends_on this) doesn't race a half-initialised database.
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost --silent"]
       interval: 5s
@@ -16,6 +34,8 @@ services:
       retries: 30
     networks: [private]
 
+  # The Express API. Built from deploy/Dockerfile.api, listens on 3000 but that
+  # port is NEVER published — only reachable inside `private` via Caddy.
   api:
     build:
       context: .
@@ -24,25 +44,29 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DB_HOST: db
+      DB_HOST: db # Compose service name = DNS name on the private network.
       DB_USER: testimonials
       DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       DB_NAME: testimonials
       PUBLIC_ORIGIN: https://${PUBLIC_DOMAIN:?Set PUBLIC_DOMAIN in .env}
       ADMIN_ORIGIN: https://${ADMIN_DOMAIN:?Set ADMIN_DOMAIN in .env}
-      TRUST_PROXY_HOPS: 1
+      TRUST_PROXY_HOPS: 1 # Requests arrive via one Caddy proxy hop.
       UPLOAD_DIR: /app/uploads
-    volumes: ["uploads:/app/uploads"]
+    volumes: ["uploads:/app/uploads"] # Photos survive rebuilds.
     depends_on:
       db:
         condition: service_healthy
     networks: [private]
     healthcheck:
+      # Calls the API's /api/health route (which itself checks the DB).
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3
 
+  # Public website (static files served by Caddy from the image).
+  # APP picks which workspace to build; VITE_ADMIN_URL is baked in at build
+  # time so the header "Admin" link points at the admin domain.
   website:
     build:
       context: .
@@ -53,6 +77,8 @@ services:
     restart: unless-stopped
     networks: [private]
 
+  # Admin dashboard, same pattern as `website` (its header links to the public
+  # site instead).
   admin:
     build:
       context: .
@@ -63,6 +89,9 @@ services:
     restart: unless-stopped
     networks: [private]
 
+  # Caddy: the public entry point. Only this service exposes host ports 80/443
+  # (443/udp = HTTP/3). Reads deploy/Caddyfile to route each domain to the
+  # correct container and to obtain/renew HTTPS certificates automatically.
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -72,14 +101,15 @@ services:
       ADMIN_DOMAIN: ${ADMIN_DOMAIN:?Set ADMIN_DOMAIN in .env}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
+      - caddy_data:/data     # Preserves issued TLS certificates.
       - caddy_config:/config
     depends_on: [api, website, admin]
     networks: [private, edge]
 
+# Named volumes keep data across `docker compose down` (but NOT with -v).
 networks:
   private:
-    internal: true
+    internal: true # No external access at all.
   edge:
 volumes:
   mysql_data:

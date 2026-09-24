@@ -1,3 +1,6 @@
+# Local development database only — the API and frontends run on your host
+# via `npm run dev`, so the port is published on 127.0.0.1 (not 0.0.0.0) so
+# only your machine can reach it. Override with the local apps/api/.env.
 services:
   db:
     image: mysql:8.4
@@ -5,6 +8,7 @@ services:
       MYSQL_DATABASE: testimonials
       MYSQL_USER: testimonials
       MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in apps/api/.env}
+      # A fixed local-only root password; never use this file in production.
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-development-root-only}
     ports: ["127.0.0.1:3306:3306"]
     volumes: ["dev_mysql_data:/var/lib/mysql"]
