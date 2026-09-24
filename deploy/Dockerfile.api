@@ -25,6 +25,9 @@ COPY --from=build /app/apps/api/package.json ./package.json
 COPY --from=build /app/apps/api/dist ./dist
 # Upload directory owned by the non-root `node` user it runs as.
 RUN mkdir -p /app/uploads && chown node:node /app/uploads
-USER node               # Never run the process as root in production.
-EXPOSE 3000             # Documentation only; compose never publishes it.
+# Danger: Dockerfiles support comments ONLY on their own lines — an inline `#`
+# becomes part of the instruction's argument (`USER node # comment` would look
+# for a user literally named "node # comment"). Always keep comments separate.
+USER node
+EXPOSE 3000
 CMD ["node", "dist/server.js"]
